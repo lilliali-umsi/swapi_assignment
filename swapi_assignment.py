@@ -62,7 +62,14 @@ def convert_string_to_float(value):
     value (str)"""
 
     try:
-        return float(value)
+       value = value.split(' ')
+       for item in value:
+           try:
+               return float(item)
+           except ValueError:
+               break
+       
+
     except ValueError:
         return value 
 
@@ -78,7 +85,7 @@ def convert_string_to_int(value):
     or 
     value (str)"""
     try:
-       return int(value)
+       return int(value.strip())
     except ValueError:
         return value 
 
@@ -91,8 +98,12 @@ def convert_string_to_list(value, delimiter=','):
 
     Returns:
     list: a list version of the string split by the delimiter"""
-
-    return value.strip().split(delimiter)
+    converted_list = []
+    value = value.split(delimiter)
+    for item in value:
+        converted_list.append(item.strip())
+    return converted_list
+    
 
 
 def filter_data(data, filter_keys):
@@ -170,7 +181,7 @@ def main():
     """a function that I will fill in soon
     Parameters: None
     Returns: None"""
-    
+
     uninhabited_planet_data = []
     filepath = os.path.join(FILE_PATH, 'swapi_planets-v1p0.json')
     planets = read_json(filepath)
