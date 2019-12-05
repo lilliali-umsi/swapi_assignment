@@ -153,7 +153,11 @@ def filter_data(data, filter_keys):
 
 
 def get_swapi_resource(url, params=None):
-    pass
+    if params:
+        response = requests.get(url, params=params).json()
+    else:
+        response = requests.get(url).json()
+    return response
 
 
 def is_unknown(value):
