@@ -62,12 +62,12 @@ def convert_string_to_float(value):
     value (str)"""
 
     try:
-       value = value.split(' ')
-       for item in value:
+       new_value = value.split(' ')
+       for item in new_value:
            try:
                return float(item)
            except ValueError:
-               break
+               return value 
        
 
     except ValueError:
@@ -85,7 +85,7 @@ def convert_string_to_int(value):
     or 
     value (str)"""
     try:
-       return int(value.strip())
+       return int(value)
     except ValueError:
         return value 
 
