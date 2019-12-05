@@ -153,6 +153,19 @@ def filter_data(data, filter_keys):
 
 
 def get_swapi_resource(url, params=None):
+    """Issues an HTTP GET request to return a representation of a
+    resource. An optional query string of key:value pairs may be
+    provided as search terms. If a match is achieved the JSON object that
+    is returned will include a list property named 'results' that
+    contains the resource(s) matched by the search query.
+
+    Parameters:
+        url (str): a url that specifies the resource.
+        params (dict): optional dictionary of query string args.
+
+    Returns:
+        dict: dictionary representation of the decoded JSON.
+    """
     if params:
         response = requests.get(url, params=params).json()
     else:
