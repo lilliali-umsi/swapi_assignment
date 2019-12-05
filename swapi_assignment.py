@@ -108,9 +108,9 @@ def filter_data(data, filter_keys):
 
     """
     record = {}
-    for key in filter_keys:
-        if key in data.keys():
-            record[key] = data[key]
+    for item in filter_keys:
+        if item in data.keys():
+            record[item] = data[item]
     return record 
 
 
