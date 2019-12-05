@@ -167,6 +167,10 @@ def write_json(filepath, data):
 
 
 def main():
+    """a function that I will fill in soon
+    Parameters: None
+    Returns: None"""
+    
     uninhabited_planet_data = []
     filepath = os.path.join(FILE_PATH, 'swapi_planets-v1p0.json')
     planets = read_json(filepath)
