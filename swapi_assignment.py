@@ -47,7 +47,34 @@ def clean_data(entity):
 
 
 def combine_data(default_data, override_data):
-    pass
+    """Creates a shallow copy of the default dictionary and then updates the new
+    copy with override data. Override values will replace default values when if
+    the keys match.
+
+    For shallow vs deep copying of mutable objects like dictionaries and lists see:
+    https://docs.python.org/3/library/copy.html
+
+    For another approach see unpacking, see: https://www.python.org/dev/peps/pep-0448/
+
+    Parameters:
+        default_data (dict): entity data that provides the default representation of the object.
+        override_data (dict): entity data intended to override matching default values.
+
+    Returns:
+        dict: updated dictionary that contains override values.
+
+    """
+
+    combined_data = default_data.copy()  # shallow
+    # combined_data = copy.copy(default_data) # shallow
+    # combined_data = copy.deepcopy(default_data) # deep
+    combined_data.update(override_data)  # in place
+
+    # Dictionary unpacking
+    # combined_data = {**default_data, **override_data}
+
+    return combined_data
+
 
 
 def convert_string_to_float(value):
