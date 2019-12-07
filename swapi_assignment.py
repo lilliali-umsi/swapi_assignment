@@ -7,9 +7,20 @@ PLANET_KEYS = ('url', 'name', 'rotation_period', 'orbital_period', 'diameter', '
 STARSHIP_KEYS = ('url', 'starship_class', 'name', 'model', 'manufacturer', 'length', 'width', 'max_atmosphering_speed', 'hyperdrive_rating', 'MGLT', 'crew', 'passengers', 'cargo_capacity', 'consumables', 'armament')
 SPECIES_KEYS = ('url', 'name', 'classification', 'designation', 'average_height', 'skin_colors', 'hair_colors', 'eye_colors', 'average_lifespan', 'language')
 VEHICLE_KEYS = ('url', 'vehicle_class', 'name', 'model', 'manufacturer', 'length', 'max_atmosphering_speed', 'crew', 'passengers', 'cargo_capacity', 'consumables', 'armament')
+PLANET_HOTH_KEYS = ('url', 'name', 'system_position', 'natural_satellites', 'rotation_period', 'orbital_period', 'diameter', 'climate', 'gravity', 'terrain', 'surface_water', 'population', 'indigenous_life_forms')
 
 def assign_crew(entity, crew):
-    pass
+    """Function assigns crew members to a starship
+
+    Parameters:
+    entity (dict): starship dictionary
+    crew (dict): crew dictionary 
+
+    Returns:
+    entity (updated_dict)
+    """
+    entity.update(crew)
+    return entity
 
 
 def clean_data(entity):
@@ -23,12 +34,12 @@ def clean_data(entity):
     float, int, list, or None
     """
     float_props = ('gravity', 'length', 'width', 'hyperdrive_rating')
-    int_props = ('rotation_period', 'orbital_period', 'diameter', 'surface_water', 'population', 'height', 'mass', 'average_height', 'average_lifespan', 'max_atmosphering_speed', 'MGLT', 'crew', 'passengers', 'cargo_capacity')
-    list_props = ('climate', 'terrain', 'hair_color', 'skin_color', 'eye_colors')
+    int_props = ('system_position', 'natural_satellites', 'rotation_period', 'orbital_period', 'diameter', 'surface_water', 'population', 'height', 'mass', 'average_height', 'average_lifespan', 'max_atmosphering_speed', 'MGLT', 'crew', 'passengers', 'cargo_capacity')
+    list_props = ('climate', 'terrain', 'indigenous_life_forms', 'hair_color', 'hair_colors', 'skin_color', 'skin_colors', 'eye_colors', 'armament')
     dict_props = ('homeworld', 'species')
     cleaned = {}
     for key, value in entity.items():
-        if key in PLANET_KEYS:
+        if key in PLANET_HOTH_KEYS or key in PEOPLE_KEYS or key in SPECIES_KEYS or key in VEHICLE_KEYS or key in STARSHIP_KEYS:
             if is_unknown(value) == True:
                 cleaned[key] = None
             elif key in int_props:
@@ -37,6 +48,21 @@ def clean_data(entity):
                 cleaned[key] = convert_string_to_float(value)
             elif key in list_props:
                 cleaned[key] = convert_string_to_list(value)
+            elif key in dict_props:
+                if key == 'homeworld':
+                    homeworld_url = get_swapi_resource(value)
+                    homeworld = filter_data(homeworld_url, PLANET_KEYS)
+                    homeworld = clean_data(homeworld)
+                    cleaned[key] = homeworld
+                if key == 'species':
+                    species_url = get_swapi_resource(value[0])
+                    species_1 = filter_data(species_url, SPECIES_KEYS)
+                    #print(species_1)
+                    species_1 = clean_data(species_1)
+                    species = []
+                    species.append(species_1)
+                    #print(species)
+                    cleaned[key] = (species)
             else:
                 cleaned[key] = value
     return cleaned
@@ -51,11 +77,6 @@ def combine_data(default_data, override_data):
     copy with override data. Override values will replace default values when if
     the keys match.
 
-    For shallow vs deep copying of mutable objects like dictionaries and lists see:
-    https://docs.python.org/3/library/copy.html
-
-    For another approach see unpacking, see: https://www.python.org/dev/peps/pep-0448/
-
     Parameters:
         default_data (dict): entity data that provides the default representation of the object.
         override_data (dict): entity data intended to override matching default values.
@@ -65,13 +86,8 @@ def combine_data(default_data, override_data):
 
     """
 
-    combined_data = default_data.copy()  # shallow
-    # combined_data = copy.copy(default_data) # shallow
-    # combined_data = copy.deepcopy(default_data) # deep
-    combined_data.update(override_data)  # in place
-
-    # Dictionary unpacking
-    # combined_data = {**default_data, **override_data}
+    combined_data = default_data.copy()  
+    combined_data.update(override_data)  
 
     return combined_data
 
@@ -99,6 +115,8 @@ def convert_string_to_float(value):
 
     except ValueError:
         return value 
+    except AttributeError:
+        return value
 
 
 def convert_string_to_int(value):
@@ -125,12 +143,14 @@ def convert_string_to_list(value, delimiter=','):
 
     Returns:
     list: a list version of the string split by the delimiter"""
-    converted_list = []
-    value = value.split(delimiter)
-    for item in value:
-        converted_list.append(item.strip())
-    return converted_list
-    
+    try:
+        converted_list = []
+        value = value.split(delimiter)
+        for item in value:
+            converted_list.append(item.strip())
+        return converted_list
+    except AttributeError:
+        return value
 
 
 def filter_data(data, filter_keys):
@@ -184,10 +204,13 @@ def is_unknown(value):
     True or False (Boolean) 
     """
     #if 'unknown' in value.lower() or 'n/a' in value.lower():
-    if value.lower().strip() == 'unknown' or value.lower().strip() == 'n/a':
-        return True
-    else:
-        return False 
+    try:
+        if value.lower().strip() == 'unknown' or value.lower().strip() == 'n/a':
+            return True
+        else:
+            return False 
+    except AttributeError:
+            return False 
 
 
 def read_json(filepath):
@@ -237,8 +260,99 @@ def main():
                     planet = clean_data(planet)
                     uninhabited_planet_data.append(planet)
     write_json('swapi_planets_uninhabited-v1p1.json', uninhabited_planet_data)
+
+    filepath2 = os.path.join(FILE_PATH, 'swapi_echo_base-v1p0.json')
+    echo_base = read_json(filepath2)
+    swapi_hoth_url = f"{ENDPOINT}/planets/4/"
+    swapi_hoth = get_swapi_resource(swapi_hoth_url)
+    echo_base_hoth = echo_base['location']['planet']
+    hoth = combine_data(swapi_hoth, echo_base_hoth)
+    hoth = filter_data(hoth, PLANET_HOTH_KEYS)
+    hoth = clean_data(hoth)
+    echo_base['location']['planet'] = hoth
+
+    echo_base_commander = echo_base['garrison']['commander']
+    #print(echo_base_commander)
+    echo_base_commander = clean_data(echo_base_commander)
+    #print(echo_base_commander)
+    echo_base['garrison']['commander'] = echo_base_commander
+  
+
+    visiting_starship_pilot = echo_base['visiting_starships']['freighters'][1]['pilot']
+    visiting_starship_pilot = clean_data(visiting_starship_pilot)
+    echo_base['visiting_starships']['freighters'][1]['pilot'] = visiting_starship_pilot
     
+    swapi_vehicles_url = f"{ENDPOINT}/vehicles/"
+    swapi_snowspeeder = get_swapi_resource(swapi_vehicles_url, {'search': 'snowspeeder'})['results'][0]
+    #print(swapi_snowspeeder)
+    echo_base_snowspeeder = echo_base['vehicle_assets']['snowspeeders'][0]['type']
+    #print(echo_base_snowspeeder)
+    snowspeeder = combine_data(echo_base_snowspeeder, swapi_snowspeeder)
+    #print(snowspeeder)
+    snowspeeder = filter_data(snowspeeder, VEHICLE_KEYS)
+    #print(snowspeeder)
+    snowspeeder = clean_data(snowspeeder)
+    #print(snowspeeder)
+    echo_base['vehicle_assets']['snowspeeders'][0]['type'] = snowspeeder
+
+    
+    swapi_starships_url = f"{ENDPOINT}/starships/"
+    swapi_xwing = get_swapi_resource(swapi_starships_url, {'search': 'T-65 X-Wing'})['results'][0]
+    echo_base_xwing = echo_base['starship_assets']['starfighters'][0]['type']
+    xwing = combine_data(echo_base_xwing, swapi_xwing)
+    xwing = filter_data(xwing, STARSHIP_KEYS)
+    xwing = clean_data(xwing)
+    echo_base['starship_assets']['starfighters'][0]['type'] = xwing
+
+    #print(swapi_xwing)
+    #print(echo_base_xwing)
+    #print(xwing)
+    swapi_gr = get_swapi_resource(swapi_starships_url, {'search': 'GR-75 medium transport'})['results'][0]
+    echo_base_gr = echo_base['starship_assets']['transports'][0]['type']
+    gr = combine_data(echo_base_gr, swapi_gr)
+    gr = filter_data(gr, STARSHIP_KEYS)
+    gr = clean_data(gr)
+    echo_base['starship_assets']['transports'][0]['type'] = gr
+    write_json('swapi_echo_base-v1p1.json', echo_base)
+
+    swapi_falcon = get_swapi_resource(swapi_starships_url, {'search': 'Millennium Falcon'})['results'][0]
+    echo_base_falcon = echo_base['visiting_starships']['freighters'][0]
+    falcon = combine_data(echo_base_falcon, swapi_falcon)
+    #print(falcon)
+    falcon = filter_data(falcon, STARSHIP_KEYS)
+    #print(falcon)
+    falcon = clean_data(falcon)
+    #print(falcon)
+    echo_base['visiting_starships']['freighters'][0] = falcon
 
 
+    swapi_people_url = f"{ENDPOINT}/people/"
+    han = get_swapi_resource(swapi_people_url, {'search': 'han solo'})['results'][0]
+    han = filter_data(han, PEOPLE_KEYS)
+    han = clean_data(han)
+    #print(han)
+    swapi_people_url = f"{ENDPOINT}/people/"
+    chewie = get_swapi_resource(swapi_people_url, {'search': 'chewbacca'})['results'][0]
+    chewie = filter_data(chewie, PEOPLE_KEYS)
+    chewie = clean_data(chewie)
+    #print(chewie)
+    falcon = assign_crew(falcon, {'pilot': han, 'copilot': chewie})
+    #print(falcon)
+    echo_base['visiting_starships']['freighters'][0] = falcon 
+
+
+    evac_plan = echo_base['evacuation_plan']
+    max_base_personnel = 0
+    for key, value in echo_base['garrison']['personnel'].items():
+        max_base_personnel += value
+    #print(max_base_personnel)
+    evac_plan['max_base_personnel'] = max_base_personnel
+    max_available_transports = echo_base['starship_assets']['transports'][0]['num_available']
+    evac_plan['max_available_transports'] = max_available_transports
+    passenger_overload_multiplier = echo_base['starship_assets']['transports'][0]['type']['passengers'] * 3
+    max_passenger_overload_capacity = max_available_transports * passenger_overload_multiplier
+    evac_plan['max_passenger_overload_capacity'] = max_passenger_overload_capacity
+    echo_base['evacuation_plan'] = evac_plan
+    write_json('swapi_echo_base-v1p1.json', echo_base)
 if __name__ == '__main__':
     main()
