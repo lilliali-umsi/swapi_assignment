@@ -264,7 +264,8 @@ def main():
 
     uninhabited_planet_data = []
     #filepath = os.path.join(FILE_PATH, 'swapi_planets-v1p0.json')
-    planets = read_json('swapi_planets-v1p0.json')
+    filepath = 'swapi_planets-v1p0.json'
+    planets = read_json(filepath)
     for planet in planets: 
         for key, value in planet.items():
             if key == 'population':
@@ -274,8 +275,8 @@ def main():
                     uninhabited_planet_data.append(planet)
     write_json('swapi_planets_uninhabited-v1p1.json', uninhabited_planet_data)
 
-    filepath2 = os.path.join(FILE_PATH, 'swapi_echo_base-v1p0.json')
-    echo_base = read_json(filepath2)
+    #filepath2 = os.path.join(FILE_PATH, 'swapi_echo_base-v1p0.json')
+    echo_base = read_json('swapi_echo_base-v1p0.json')
     swapi_hoth_url = f"{ENDPOINT}/planets/4/"
     swapi_hoth = get_swapi_resource(swapi_hoth_url)
     echo_base_hoth = echo_base['location']['planet']
