@@ -263,8 +263,8 @@ def main():
     """
 
     uninhabited_planet_data = []
-    filepath = os.path.join(FILE_PATH, 'swapi_planets-v1p0.json')
-    planets = read_json(filepath)
+    #filepath = os.path.join(FILE_PATH, 'swapi_planets-v1p0.json')
+    planets = read_json('swapi_planets-v1p0.json')
     for planet in planets: 
         for key, value in planet.items():
             if key == 'population':
