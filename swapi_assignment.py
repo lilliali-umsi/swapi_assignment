@@ -245,9 +245,22 @@ def write_json(filepath, data):
 
 
 def main():
-    """a function that I will fill in soon
-    Parameters: None
-    Returns: None"""
+    """Entry point to program. Performs the following operations:
+
+    1. Reads swapi_planets-v1p0.json file, filters uninhabited planets, cleans data,
+    and writes into a new json file
+    2. Request additional info about Hoth, garrison commander, vehicles, starships from swapi.
+    3. Combine default data with swapi data; override default values with swapi data (match on key).
+    4. Filter traveler, planet, and vehicle entity data, removing unnecessary key-value pairs
+    5. Create new dictionaries for evacuation plan (numbers, transports, crew), filter key-value pairs, clean data
+    6. Write updated echo_base dict to the file system as a JSON document.
+
+    Parameters:
+        None
+
+    Returns:
+        None
+    """
 
     uninhabited_planet_data = []
     filepath = os.path.join(FILE_PATH, 'swapi_planets-v1p0.json')
@@ -353,6 +366,45 @@ def main():
     max_passenger_overload_capacity = max_available_transports * passenger_overload_multiplier
     evac_plan['max_passenger_overload_capacity'] = max_passenger_overload_capacity
     echo_base['evacuation_plan'] = evac_plan
-    write_json('swapi_echo_base-v1p1.json', echo_base)
+
+    
+    evac_transport = gr.copy()
+    evac_transport['name'] = 'Bright Hope'
+    evac_transport['passenger_manifest'] = []
+    leia = get_swapi_resource(swapi_people_url, {'search': 'leia organa'})['results'][0]
+    leia = filter_data(leia, PEOPLE_KEYS)
+    leia = clean_data(leia)
+
+    C3PO = get_swapi_resource(swapi_people_url, {'search': 'C-3PO'})['results'][0]
+    C3PO = filter_data(C3PO, PEOPLE_KEYS)
+    C3PO = clean_data(C3PO)
+    #print(C3PO)
+    evac_transport['passenger_manifest'].append(leia)
+    evac_transport['passenger_manifest'].append(C3PO)
+
+    evac_transport['escorts'] =[]
+    luke_x_wing = xwing.copy()
+    wedge_x_wing = xwing.copy()
+    luke = get_swapi_resource(swapi_people_url, {'search': 'luke skywalker'})['results'][0]
+    luke = filter_data(luke, PEOPLE_KEYS)
+    luke = clean_data(luke)
+    #print(luke)
+    R2D2 = get_swapi_resource(swapi_people_url, {'search': 'R2-D2'})['results'][0]
+    R2D2 = filter_data(R2D2, PEOPLE_KEYS)
+    R2D2 = clean_data(R2D2)
+    luke_x_wing = assign_crew(luke_x_wing, {'pilot' : luke, 'astromech_droid': R2D2})
+    evac_transport['escorts'].append(luke_x_wing)
+
+    wedge = get_swapi_resource(swapi_people_url, {'search': 'wedge antilles'})['results'][0]
+    wedge = filter_data(wedge, PEOPLE_KEYS)
+    wedge = clean_data(wedge)
+    R5D4 = get_swapi_resource(swapi_people_url, {'search': 'R5-D4'})['results'][0]
+    R5D4 = filter_data(R5D4, PEOPLE_KEYS)
+    R5D4 = clean_data(R5D4)
+    wedge_x_wing = assign_crew(wedge_x_wing, {'pilot': wedge, 'astromech_droid': R5D4})
+    evac_transport['escorts'].append(wedge_x_wing)
+    evac_plan['transport_assignments'].append(evac_transport)
+    echo_base['evacuation_plan'] = evac_plan
+    write_json('swapi_echo_base-v1p1.json', echo_base)   
 if __name__ == '__main__':
     main()
